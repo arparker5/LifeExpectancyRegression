@@ -7,6 +7,30 @@ from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 
 
+def myRegression(X_columns, Y):
+
+    X = data[X_columns].values
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+    reg = LinearRegression()
+    reg.fit(X_train, Y_train)
+
+    Y_pred = reg.predict(X_test)
+    df = pd.DataFrame({'Actual': Y_test, 'Predicted': Y_pred})
+
+    print("Regression model output (first 25 variables): ")
+    print()
+    print(df.head(25))
+
+    print('Mean Absolute Error:', metrics.mean_absolute_error(Y_test, Y_pred))
+    print('Mean Squared Error:', metrics.mean_squared_error(Y_test, Y_pred))
+    print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(Y_test, Y_pred)))
+
+
+
+
+
 data = pd.read_csv('../Life Expectancy Data.csv')
 data = data.fillna(method='bfill')
 
@@ -16,44 +40,40 @@ data['Status'] = data['Status'].map(d).fillna(data['Status'])
 # print(data.isnull().any())
 # print(data.describe())
 
-
-X = data[['Status', 'Adult Mortality', 'infant deaths',
-          'Alcohol', 'percentage expenditure', 'Hepatitis B', 'Measles ',
-          ' BMI ', 'under-five deaths ', 'Polio', 'Total expenditure', 'Diphtheria ',
-          ' HIV/AIDS', 'GDP', 'Population', ' thinness  1-19 years', ' thinness 5-9 years',
-          'Income composition of resources', 'Schooling']].values
-
 X_columns = ['Status', 'Adult Mortality', 'infant deaths',
           'Alcohol', 'percentage expenditure', 'Hepatitis B', 'Measles ',
           ' BMI ', 'under-five deaths ', 'Polio', 'Total expenditure', 'Diphtheria ',
           ' HIV/AIDS', 'GDP', 'Population', ' thinness  1-19 years', ' thinness 5-9 years',
           'Income composition of resources', 'Schooling']
 
+
 Y = data['Life expectancy '].values
+
+myRegression(X_columns, Y)
+
+# ----------------- Begin second model ----------------- #
+
+X_columns = ['Status', 'Adult Mortality', 'infant deaths',
+          'Alcohol', 'Hepatitis B',
+          ' BMI ', 'under-five deaths ', 'Polio', 'Total expenditure', 'Diphtheria ',
+          ' HIV/AIDS', ' thinness  1-19 years', ' thinness 5-9 years',
+          'Income composition of resources', 'Schooling']
+
+X = data[X_columns].values
+
 
 # plt.figure(figsize=(15, 10))
 # plt.tight_layout()
 # sns.distplot(data['Life expectancy '])
 # plt.show()
 
-# 80/20 split of training and test data
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 
-reg = LinearRegression()
-reg.fit(X_train, Y_train)
-
-coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
+# coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
 # print(coeff_df)
-Y_pred = reg.predict(X_test)
-df = pd.DataFrame({'Actual': Y_test, 'Predicted': Y_pred})
-print(df.head(25))
+
 
 # df.head(25).plot(kind='bar', figsize=(10, 8))
 # plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
 # plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
 # plt.show()
-
-print('Mean Absolute Error:', metrics.mean_absolute_error(Y_test, Y_pred))
-print('Mean Squared Error:', metrics.mean_squared_error(Y_test, Y_pred))
-print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(Y_test, Y_pred)))
 
