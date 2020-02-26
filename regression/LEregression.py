@@ -32,9 +32,9 @@ X_columns = ['Status', 'Adult Mortality', 'infant deaths',
 
 Y = data['Life expectancy '].values
 
-plt.figure(figsize=(15, 10))
-plt.tight_layout()
-sns.distplot(data['Life expectancy '])
+# plt.figure(figsize=(15, 10))
+# plt.tight_layout()
+# sns.distplot(data['Life expectancy '])
 # plt.show()
 
 # 80/20 split of training and test data
@@ -44,4 +44,13 @@ reg = LinearRegression()
 reg.fit(X_train, Y_train)
 
 coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
-print(coeff_df)
+# print(coeff_df)
+Y_pred = reg.predict(X_test)
+df = pd.DataFrame({'Actual': Y_test, 'Predicted': Y_pred})
+print(df.head(25))
+
+df.head(25).plot(kind='bar', figsize=(10,8))
+plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
+plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
+plt.show()
+
