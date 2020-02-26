@@ -1,14 +1,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 
 
 data = pd.read_csv('../Life Expectancy Data.csv')
-print(data.shape)
-# print(data.describe())
 data = data.fillna(method='bfill')
 
 d = {'Developing': 0, 'Developed': 1}
@@ -49,8 +48,12 @@ Y_pred = reg.predict(X_test)
 df = pd.DataFrame({'Actual': Y_test, 'Predicted': Y_pred})
 print(df.head(25))
 
-df.head(25).plot(kind='bar', figsize=(10,8))
-plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
-plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
-plt.show()
+# df.head(25).plot(kind='bar', figsize=(10, 8))
+# plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
+# plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
+# plt.show()
+
+print('Mean Absolute Error:', metrics.mean_absolute_error(Y_test, Y_pred))
+print('Mean Squared Error:', metrics.mean_squared_error(Y_test, Y_pred))
+print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(Y_test, Y_pred)))
 
