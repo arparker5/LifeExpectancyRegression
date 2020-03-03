@@ -91,7 +91,7 @@ def myRegression(X_columns, Y):
     return [mae, mse, rmse]
 
 
-data = pd.read_csv('../Life Expectancy Data.csv')
+data = pd.read_csv('Life Expectancy Data.csv')
 data = data.fillna(method='bfill')
 
 d = {'Developing': 0, 'Developed': 1}
