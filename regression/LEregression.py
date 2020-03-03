@@ -7,6 +7,67 @@ from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 
 
+def compareCountries(X_columns, Y):
+    X = data[X_columns].values
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+    X_tail = []
+    X_tailtest = []
+    country = []
+
+    for tr in X_train:
+        X_tail.append(tr[1:])
+
+    for tl in X_test:
+        country.append(tl[0])
+        X_tailtest.append(tl[1:])
+
+    reg = LinearRegression()
+    reg.fit(X_tail, Y_train)
+
+    Y_pred = reg.predict(X_tailtest)
+
+    clist = []
+    for i in range(len(Y_test)):
+        item = [country[i], Y_test[i], Y_pred[i]]
+        clist.append(item)
+
+    clist = sorted(clist, key=lambda x: x[0])
+
+
+    formatclist = []
+    curcountry = clist[0][0]
+    templist = [curcountry, [], []]
+    for c in clist:                                             # Making sub-lists for each country
+        if c[0] == curcountry:
+            templist[1].append(c[1])
+            templist[2].append(c[2])
+        else:
+            formatclist.append(templist)
+            curcountry = c[0]
+            templist = [curcountry, [c[1]], [c[2]]]
+    formatclist.append(templist)
+
+
+    country = []
+    for f in formatclist:
+        country.append(f[0])
+
+    print()
+    print()
+    mae = []
+    for f in formatclist:
+        mae.append(metrics.mean_absolute_error(f[1], f[2]))
+
+    df = pd.DataFrame({'Country': country, 'Mean Average Error': mae})
+    df.set_index('Country', inplace=True)
+    df.sort_values(by=['Mean Average Error'], ascending=False, inplace=True)
+    df = df.iloc[np.r_[0:25, -25:0]]
+    df.plot(kind='barh', figsize=(50, 100))
+    plt.show()
+
+
 def myRegression(X_columns, Y):
 
     X = data[X_columns].values
@@ -83,7 +144,7 @@ X_columns = ['Status', 'Adult Mortality', 'infant deaths',
           'Income composition of resources', 'Schooling']
 
 print()
-print("------------ Dropping 'percentage expenditure' ------------")
+print("------------ Dropping percentage expenditure ------------")
 errorstats.append(myRegression(X_columns, Y))
 
 
@@ -101,6 +162,21 @@ df = pd.DataFrame({'Variables Dropped:': rowlist, 'MAE': maelist,
                    'MSE': mselist, 'RMSE': rmselist})
 df.set_index('Variables Dropped:', inplace=True)
 print(df)
+
+
+X_columns = ['Country', 'Status', 'Adult Mortality', 'infant deaths',
+          'Alcohol', 'percentage expenditure', 'Hepatitis B',
+          ' BMI ', 'under-five deaths ', 'Polio', 'Total expenditure', 'Diphtheria ',
+          ' HIV/AIDS', ' thinness  1-19 years', ' thinness 5-9 years',
+          'Income composition of resources', 'Schooling']
+
+print()
+print("------------ Testing Country Accuracy ------------")
+compareCountries(X_columns, Y)
+
+
+
+
 # plt.show()
 
 # plt.figure(figsize=(15, 10))
