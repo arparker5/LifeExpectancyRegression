@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn import linear_model
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 
@@ -88,7 +89,57 @@ def myRegression(X_columns, Y):
     mse = metrics.mean_squared_error(Y_test, Y_pred)
     rmse = np.sqrt(metrics.mean_squared_error(Y_test, Y_pred))
 
+    coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
+    print(coeff_df)
+
     return [mae, mse, rmse]
+
+
+def testalpha(X_columns, Y, lasso):    # Tests multiple alpha values on Ridge and Lasso regressions. 0: Ridge. 1: Lasso
+    X = data[X_columns].values
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+
+    maelist = []
+    mselist = []
+    rmselist = []
+    #avalues = [0.1, 0.5, 1.0, 5.0, 10.0, 13.0]
+    avalues = [4.6, 5.0, 10.0, 13.0, 20.0, 50.0, 100.0, 300.0, 1000.0, 2000.0]
+
+    errorstats = []
+    for a in avalues:
+        if lasso:
+            reg = linear_model.Lasso(alpha=a)
+        else:
+            reg = linear_model.Ridge(alpha=a)
+        reg.fit(X_train, Y_train)
+
+        Y_pred = reg.predict(X_test)
+        df = pd.DataFrame({'Actual': Y_test, 'Predicted': Y_pred})
+
+        mae = metrics.mean_absolute_error(Y_test, Y_pred)
+        mse = metrics.mean_squared_error(Y_test, Y_pred)
+        rmse = np.sqrt(metrics.mean_squared_error(Y_test, Y_pred))
+
+        errorstats.append([mae, mse, rmse])
+
+    for es in errorstats:
+        maelist.append(es[0])
+        mselist.append(es[1])
+        rmselist.append(es[2])
+
+    df = pd.DataFrame({'Alpha value:': avalues, 'MAE': maelist,
+                       'MSE': mselist, 'RMSE': rmselist})
+    df.set_index('Alpha value:', inplace=True)
+    print(df)
+
+    # print("Ridge Regression model output(first 25 variables): ")
+    # print()
+    # print(df.head(25))
+
+    # coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
+    # print(coeff_df)
 
 
 data = pd.read_csv('Life Expectancy Data.csv')
@@ -161,6 +212,7 @@ for es in errorstats:
 df = pd.DataFrame({'Variables Dropped:': rowlist, 'MAE': maelist,
                    'MSE': mselist, 'RMSE': rmselist})
 df.set_index('Variables Dropped:', inplace=True)
+print("------------ Results ------------")
 print(df)
 
 
@@ -171,10 +223,23 @@ X_columns = ['Country', 'Status', 'Adult Mortality', 'infant deaths',
           'Income composition of resources', 'Schooling']
 
 print()
-print("------------ Testing Country Accuracy ------------")
+# ------------ Testing Country Accuracy ------------
 compareCountries(X_columns, Y)
 
 
+X_columns = ['Status', 'Adult Mortality', 'infant deaths',
+          'Alcohol', 'percentage expenditure', 'Hepatitis B',
+          ' BMI ', 'under-five deaths ', 'Polio', 'Total expenditure', 'Diphtheria ',
+          ' HIV/AIDS', ' thinness  1-19 years', ' thinness 5-9 years',
+          'Income composition of resources', 'Schooling']
+
+print()
+print("------------ Ridge Regression ------------")
+testalpha(X_columns, Y, 0)
+
+print()
+print("------------ Lasso Regression ------------")
+testalpha(X_columns, Y, 1)
 
 
 # plt.show()
