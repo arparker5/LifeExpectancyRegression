@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
+from sklearn.model_selection import cross_val_predict
 
 
 def compareCountries(X_columns, Y):
@@ -66,31 +66,35 @@ def compareCountries(X_columns, Y):
     df.sort_values(by=['Mean Average Error'], ascending=False, inplace=True)
     df = df.iloc[np.r_[0:25, -25:0]]
     df.plot(kind='barh', figsize=(50, 100))
+    plt.suptitle("25 Best and Worst MAE per Country")
     plt.show()
 
 
-def myRegression(X_columns, Y):
+def myRegression(X_columns, Y, coeff=0):
 
     X = data[X_columns].values
-
+                ############### 2.a Splitting training and test data ###############
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 
     reg = LinearRegression()
     reg.fit(X_train, Y_train)
 
     Y_pred = reg.predict(X_test)
-    df = pd.DataFrame({'Actual': Y_test, 'Predicted': Y_pred})
+    # df = pd.DataFrame({'Actual': Y_test, 'Predicted': Y_pred})
 
-    print("Regression model output(first 25 variables): ")
-    print()
-    print(df.head(25))
+    # print("Regression model output(first 25 variables): ")
+    # print()
+    # print(df.head(25))
 
     mae = metrics.mean_absolute_error(Y_test, Y_pred)
     mse = metrics.mean_squared_error(Y_test, Y_pred)
     rmse = np.sqrt(metrics.mean_squared_error(Y_test, Y_pred))
 
-    coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
-    print(coeff_df)
+    if coeff:
+        coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
+        print()
+        print("Regression coefficients")
+        print(coeff_df)
 
     return [mae, mse, rmse]
 
@@ -104,7 +108,6 @@ def testalpha(X_columns, Y, lasso):    # Tests multiple alpha values on Ridge an
     maelist = []
     mselist = []
     rmselist = []
-    #avalues = [0.1, 0.5, 1.0, 5.0, 10.0, 13.0]
     avalues = [4.6, 5.0, 10.0, 13.0, 20.0, 50.0, 100.0, 300.0, 1000.0, 2000.0]
 
     errorstats = []
@@ -134,12 +137,24 @@ def testalpha(X_columns, Y, lasso):    # Tests multiple alpha values on Ridge an
     df.set_index('Alpha value:', inplace=True)
     print(df)
 
-    # print("Ridge Regression model output(first 25 variables): ")
-    # print()
-    # print(df.head(25))
 
-    # coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
-    # print(coeff_df)
+def cross_validate(X_columns, Y):
+    X = data[X_columns].values
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+    reg = LinearRegression()
+    model = reg.fit(X_train, Y_train)
+
+    pred = cross_val_predict(model, X, Y, cv=6)
+
+
+    mae = metrics.mean_absolute_error(Y, pred)
+    mse = metrics.mean_squared_error(Y, pred)
+    rmse = np.sqrt(metrics.mean_squared_error(Y, pred))
+
+    return [mae, mse, rmse]
+
 
 
 data = pd.read_csv('Life Expectancy Data.csv')
@@ -163,7 +178,7 @@ Y = data['Life expectancy '].values
 
 print()
 print("------------ Model with all variables ------------")
-errorstats.append(myRegression(X_columns, Y))
+errorstats.append(myRegression(X_columns, Y, 1))
 
 
 X_columns = ['Status', 'Adult Mortality', 'infant deaths',
@@ -172,20 +187,18 @@ X_columns = ['Status', 'Adult Mortality', 'infant deaths',
           ' HIV/AIDS', 'GDP', ' thinness  1-19 years', ' thinness 5-9 years',
           'Income composition of resources', 'Schooling']
 
-print()
-print("------------ Model with population dropped ------------")
+#print("------------ Model with population dropped ------------")
 errorstats.append(myRegression(X_columns, Y))
 
 
-X_columns = ['Status', 'Adult Mortality', 'infant deaths',
+Best_X_columns = ['Status', 'Adult Mortality', 'infant deaths',
           'Alcohol', 'percentage expenditure', 'Hepatitis B',
           ' BMI ', 'under-five deaths ', 'Polio', 'Total expenditure', 'Diphtheria ',
           ' HIV/AIDS', ' thinness  1-19 years', ' thinness 5-9 years',
           'Income composition of resources', 'Schooling']
 
-print()
-print("------------ Dropping Measles, GDP ------------")
-errorstats.append(myRegression(X_columns, Y))
+#print("------------ Dropping Measles, GDP ------------")
+errorstats.append(myRegression(Best_X_columns, Y))
 
 
 X_columns = ['Status', 'Adult Mortality', 'infant deaths',
@@ -194,8 +207,7 @@ X_columns = ['Status', 'Adult Mortality', 'infant deaths',
           ' HIV/AIDS', ' thinness  1-19 years', ' thinness 5-9 years',
           'Income composition of resources', 'Schooling']
 
-print()
-print("------------ Dropping percentage expenditure ------------")
+# print("------------ Dropping percentage expenditure ------------")
 errorstats.append(myRegression(X_columns, Y))
 
 
@@ -212,8 +224,17 @@ for es in errorstats:
 df = pd.DataFrame({'Variables Dropped:': rowlist, 'MAE': maelist,
                    'MSE': mselist, 'RMSE': rmselist})
 df.set_index('Variables Dropped:', inplace=True)
-print("------------ Results ------------")
+print()
+print("------------ Model Error Comparison ------------")
 print(df)
+print()
+print("Dropping Population, Measles, and GDP provide the best model")
+
+
+myRegression(Best_X_columns, Y, 1)
+print()
+print("Shown above are the coefficients for my best model")
+
 
 
 X_columns = ['Country', 'Status', 'Adult Mortality', 'infant deaths',
@@ -223,39 +244,34 @@ X_columns = ['Country', 'Status', 'Adult Mortality', 'infant deaths',
           'Income composition of resources', 'Schooling']
 
 print()
-# ------------ Testing Country Accuracy ------------
+# ------------ 2.C) Testing Country Accuracy ------------
+
 compareCountries(X_columns, Y)
 
 
-X_columns = ['Status', 'Adult Mortality', 'infant deaths',
-          'Alcohol', 'percentage expenditure', 'Hepatitis B',
-          ' BMI ', 'under-five deaths ', 'Polio', 'Total expenditure', 'Diphtheria ',
-          ' HIV/AIDS', ' thinness  1-19 years', ' thinness 5-9 years',
-          'Income composition of resources', 'Schooling']
 
 print()
 print("------------ Ridge Regression ------------")
-testalpha(X_columns, Y, 0)
+testalpha(Best_X_columns, Y, 0)
 
 print()
 print("------------ Lasso Regression ------------")
-testalpha(X_columns, Y, 1)
+testalpha(Best_X_columns, Y, 1)
 
 
-# plt.show()
+errors = cross_validate(Best_X_columns, Y)
 
-# plt.figure(figsize=(15, 10))
-# plt.tight_layout()
-# sns.distplot(data['Life expectancy '])
-# plt.show()
+maelist = [errors[0], errorstats[2][0]]
+mselist = [errors[1], errorstats[2][0]]
+rmselist = [errors[2], errorstats[2][0]]
 
+modellist = ["Cross validated", "My model"]
 
-# coeff_df = pd.DataFrame(reg.coef_, X_columns, columns=['Coefficient'])
-# print(coeff_df)
+df = pd.DataFrame({'Model': modellist, 'MAE': maelist,
+                   'MSE': mselist, 'RMSE': rmselist})
+df.set_index('Model', inplace=True)
 
+print()
+print(df)
 
-# df.head(25).plot(kind='bar', figsize=(10, 8))
-# plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
-# plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
-# plt.show()
 
